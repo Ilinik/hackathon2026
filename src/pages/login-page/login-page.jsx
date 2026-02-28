@@ -11,8 +11,10 @@ import {
 import { Input } from '@/components/ui/input';
 import { useAuth } from '@/hooks/useAuth';
 import { useForm } from 'react-hook-form';
+import { zodResolver } from '@hookform/resolvers/zod';
 import { useNavigate } from 'react-router';
 import { toast } from 'sonner';
+import { loginSchema } from '@/lib/validation';
 
 export const LoginPage = () => {
   const { isLoading, login } = useAuth();
@@ -22,7 +24,14 @@ export const LoginPage = () => {
     register,
     handleSubmit,
     formState: { errors },
-  } = useForm();
+  } = useForm({
+    resolver: zodResolver(loginSchema),
+    defaultValues: {
+      email: '',
+      password: '',
+    },
+    mode: 'onChange',
+  });
 
   const onSubmit = async (data) => {
     try {
@@ -55,13 +64,7 @@ export const LoginPage = () => {
                     id="email"
                     type="email"
                     placeholder="yourmail@gmail.com"
-                    {...register('email', {
-                      required: 'Email обязателен',
-                      pattern: {
-                        value: /^[^\s@]+@[^\s@]+\.[^\s@]+$/,
-                        message: 'Введите корректный email',
-                      },
-                    })}
+                    {...register('email')}
                   />
                   <FieldError errors={errors.email ? [errors.email] : []} />
                 </Field>
@@ -71,13 +74,7 @@ export const LoginPage = () => {
                     id="password"
                     type="password"
                     placeholder="••••••••"
-                    {...register('password', {
-                      required: 'Пароль обязателен',
-                      minLength: {
-                        value: 8,
-                        message: 'Пароль должен содержать минимум 8 символов',
-                      },
-                    })}
+                    {...register('password')}
                   />
                   <FieldError
                     errors={errors.password ? [errors.password] : []}

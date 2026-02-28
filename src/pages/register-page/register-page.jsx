@@ -8,6 +8,7 @@ import {
   FieldSet,
   FieldContent,
   FieldDescription,
+  FieldError,
 } from '@/components/ui/field';
 import { Input } from '@/components/ui/input';
 import { Progress } from '@/components/ui/progress';
@@ -21,6 +22,9 @@ import {
   PopoverContent,
   PopoverTrigger,
 } from '@/components/ui/popover';
+import { useForm, Controller } from 'react-hook-form';
+import { zodResolver } from '@hookform/resolvers/zod';
+import { registerSchema, calculateAge } from '@/lib/validation';
 
 export const RegisterPage = () => {
   const { isLoading, registration } = useAuth();
@@ -28,23 +32,44 @@ export const RegisterPage = () => {
 
   const [currentStep, setCurrentStep] = useState(1);
   const totalSteps = 2;
-
-  const [firstName, setFirstName] = useState('');
-  const [lastName, setLastName] = useState('');
-  const [middleName, setMiddleName] = useState('');
-
-  const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
-
   const [open, setOpen] = useState(false);
-  const [date, setDate] = useState(undefined);
-  const [parentFullName, setParentFullName] = useState('');
-  const [parentPhoneNumber, setParentPhoneNumber] = useState('');
+
+  const {
+    register,
+    handleSubmit,
+    control,
+    watch,
+    trigger,
+    formState: { errors },
+  } = useForm({
+    resolver: zodResolver(registerSchema),
+    defaultValues: {
+      surname: '',
+      name: '',
+      patronymic: '',
+      dateOfBirth: undefined,
+      email: '',
+      password: '',
+      parentFullName: '',
+      parentPhone: '',
+      terms: false,
+    },
+    mode: 'onChange',
+  });
+
+  const dateOfBirth = watch('dateOfBirth');
+  const age = calculateAge(dateOfBirth);
+  const isUnder14 = age < 14;
 
   const progress = (currentStep / totalSteps) * 100;
 
-  const handleNext = () => {
-    if (currentStep < totalSteps) {
+  const handleNext = async () => {
+    const step1Fields = ['surname', 'name', 'patronymic', 'dateOfBirth'];
+    if (isUnder14) {
+      step1Fields.push('parentFullName', 'parentPhone');
+    }
+    const isValid = await trigger(step1Fields);
+    if (isValid) {
       setCurrentStep(currentStep + 1);
     }
   };
@@ -55,18 +80,17 @@ export const RegisterPage = () => {
     }
   };
 
-  const handleSubmit = async (e) => {
-    e.preventDefault();
+  const onSubmit = async (data) => {
     try {
       await registration({
-        email,
-        password,
-        name: firstName,
-        surname: lastName,
-        patronymic: middleName,
-        age: calculateAge(),
-        parentFullName: isUnder14() ? parentFullName : undefined,
-        parentPhone: isUnder14() ? parentPhoneNumber : undefined,
+        email: data.email,
+        password: data.password,
+        name: data.name,
+        surname: data.surname,
+        patronymic: data.patronymic,
+        age: calculateAge(data.dateOfBirth),
+        parentFullName: isUnder14 ? data.parentFullName : undefined,
+        parentPhone: isUnder14 ? data.parentPhone : undefined,
       });
       navigate('/');
     } catch (error) {
@@ -74,38 +98,25 @@ export const RegisterPage = () => {
     }
   };
 
-  const calculateAge = () => {
-    if (!date) return 0;
-    const today = new Date();
-    const birthDate = new Date(date);
-    let age = today.getFullYear() - birthDate.getFullYear();
-    const monthDiff = today.getMonth() - birthDate.getMonth();
-    if (
-      monthDiff < 0 ||
-      (monthDiff === 0 && today.getDate() < birthDate.getDate())
-    ) {
-      age--;
-    }
-    return age;
-  };
-
-  const isUnder14 = () => {
-    return calculateAge() < 14;
-  };
-
   const isStep1Valid =
-    firstName &&
-    lastName &&
-    middleName &&
-    date &&
-    (!isUnder14() || parentFullName);
-  const isStep2Valid = email && password;
+    watch('surname') &&
+    watch('name') &&
+    watch('patronymic') &&
+    dateOfBirth &&
+    (!isUnder14 || (watch('parentFullName') && watch('parentPhone')));
+
+  const isStep2Valid =
+    watch('email') &&
+    watch('password') &&
+    watch('terms') &&
+    !errors.email &&
+    !errors.password;
 
   return (
     <div className="flex items-center justify-center min-h-[calc(100vh-250px)]">
       <Container className="flex items-center justify-center">
         <Card className="w-full max-w-lg mx-4 sm:mx-6 lg:mx-8">
-          <form onSubmit={handleSubmit}>
+          <form onSubmit={handleSubmit(onSubmit)}>
             <FieldSet className="w-full max-w-md sm:max-w-lg mx-auto px-4 sm:px-6 py-2">
               <FieldGroup className="gap-3">
                 <CardTitle>Регистрация аккаунта</CardTitle>
@@ -114,70 +125,90 @@ export const RegisterPage = () => {
               <FieldGroup className="gap-3">
                 {currentStep === 1 && (
                   <>
-                    <Field>
-                      <FieldLabel htmlFor="lastName">Фамилия</FieldLabel>
+                    <Field data-invalid={!!errors.surname}>
+                      <FieldLabel htmlFor="surname">Фамилия</FieldLabel>
                       <Input
-                        id="lastName"
+                        id="surname"
                         type="text"
                         placeholder="Иванов"
-                        value={lastName}
-                        onChange={(e) => setLastName(e.target.value)}
+                        {...register('surname')}
+                      />
+                      <FieldError
+                        errors={errors.surname ? [errors.surname] : []}
                       />
                     </Field>
-                    <Field>
-                      <FieldLabel htmlFor="firstName">Имя</FieldLabel>
+
+                    <Field data-invalid={!!errors.name}>
+                      <FieldLabel htmlFor="name">Имя</FieldLabel>
                       <Input
-                        id="firstName"
+                        id="name"
                         type="text"
                         placeholder="Иван"
-                        value={firstName}
-                        onChange={(e) => setFirstName(e.target.value)}
+                        {...register('name')}
                       />
+                      <FieldError errors={errors.name ? [errors.name] : []} />
                     </Field>
-                    <Field>
-                      <FieldLabel htmlFor="middleName">Отчество</FieldLabel>
+
+                    <Field data-invalid={!!errors.patronymic}>
+                      <FieldLabel htmlFor="patronymic">Отчество</FieldLabel>
                       <Input
-                        id="middleName"
+                        id="patronymic"
                         type="text"
                         placeholder="Иванович"
-                        value={middleName}
-                        onChange={(e) => setMiddleName(e.target.value)}
+                        {...register('patronymic')}
+                      />
+                      <FieldError
+                        errors={errors.patronymic ? [errors.patronymic] : []}
                       />
                     </Field>
 
-                    <Field className="w-44">
+                    <Field
+                      className="w-full"
+                      data-invalid={!!errors.dateOfBirth}
+                    >
                       <FieldLabel htmlFor="date">Дата рождения</FieldLabel>
-                      <Popover open={open} onOpenChange={setOpen}>
-                        <PopoverTrigger asChild>
-                          <Button
-                            variant="outline"
-                            id="date"
-                            className="justify-start font-normal"
-                          >
-                            {date ? date.toLocaleDateString() : 'Выбрать дату'}
-                          </Button>
-                        </PopoverTrigger>
-                        <PopoverContent
-                          className="w-auto overflow-hidden p-0"
-                          align="start"
-                        >
-                          <Calendar
-                            mode="single"
-                            selected={date}
-                            defaultMonth={date}
-                            captionLayout="dropdown"
-                            onSelect={(date) => {
-                              setDate(date);
-                              setOpen(false);
-                            }}
-                          />
-                        </PopoverContent>
-                      </Popover>
+                      <Controller
+                        name="dateOfBirth"
+                        control={control}
+                        render={({ field }) => (
+                          <Popover open={open} onOpenChange={setOpen}>
+                            <PopoverTrigger asChild>
+                              <Button
+                                variant="outline"
+                                id="date"
+                                className="justify-start font-normal w-full"
+                              >
+                                {field.value
+                                  ? field.value.toLocaleDateString()
+                                  : 'Выбрать дату'}
+                              </Button>
+                            </PopoverTrigger>
+                            <PopoverContent
+                              className="w-auto overflow-hidden p-0"
+                              align="start"
+                            >
+                              <Calendar
+                                mode="single"
+                                selected={field.value}
+                                defaultMonth={field.value}
+                                captionLayout="dropdown"
+                                onSelect={(date) => {
+                                  field.onChange(date);
+                                  setOpen(false);
+                                }}
+                              />
+                            </PopoverContent>
+                          </Popover>
+                        )}
+                      />
+                      <FieldError
+                        errors={errors.dateOfBirth ? [errors.dateOfBirth] : []}
+                      />
                     </Field>
 
-                    {isUnder14() && (
+                    {isUnder14 && (
                       <>
-                        <Field>
+                        <Field data-invalid={!!errors.parentFullName}>
                           <FieldLabel htmlFor="parentFullName">
                             ФИО родителя
                           </FieldLabel>
@@ -185,22 +216,30 @@ export const RegisterPage = () => {
                             id="parentFullName"
                             type="text"
                             placeholder="Иванов Иван Иванович"
-                            value={parentFullName}
-                            onChange={(e) => setParentFullName(e.target.value)}
+                            {...register('parentFullName')}
+                          />
+                          <FieldError
+                            errors={
+                              errors.parentFullName
+                                ? [errors.parentFullName]
+                                : []
+                            }
                           />
                         </Field>
 
-                        <Field>
-                          <FieldLabel htmlFor="form-phone">
+                        <Field data-invalid={!!errors.parentPhone}>
+                          <FieldLabel htmlFor="parentPhone">
                             Телефон родителя
                           </FieldLabel>
                           <Input
-                            id="form-phone"
+                            id="parentPhone"
                             type="tel"
                             placeholder="+7 (555) 123-4567"
-                            value={parentPhoneNumber}
-                            onChange={(e) =>
-                              setParentPhoneNumber(e.target.value)
+                            {...register('parentPhone')}
+                          />
+                          <FieldError
+                            errors={
+                              errors.parentPhone ? [errors.parentPhone] : []
                             }
                           />
                         </Field>
@@ -211,29 +250,46 @@ export const RegisterPage = () => {
 
                 {currentStep === 2 && (
                   <>
-                    <Field>
+                    <Field data-invalid={!!errors.email}>
                       <FieldLabel htmlFor="email">Email</FieldLabel>
                       <Input
                         id="email"
                         type="email"
                         placeholder="yourmail@gmail.com"
-                        value={email}
-                        onChange={(e) => setEmail(e.target.value)}
+                        {...register('email')}
                       />
+                      <FieldError errors={errors.email ? [errors.email] : []} />
                     </Field>
-                    <Field>
+
+                    <Field data-invalid={!!errors.password}>
                       <FieldLabel htmlFor="password">Пароль</FieldLabel>
                       <Input
                         id="password"
                         type="password"
                         placeholder="••••••••"
-                        value={password}
-                        onChange={(e) => setPassword(e.target.value)}
+                        {...register('password')}
+                      />
+                      <FieldError
+                        errors={errors.password ? [errors.password] : []}
                       />
                     </Field>
 
-                    <Field orientation="horizontal" className="mb-3 mt-2">
-                      <Checkbox id="terms-checkbox-2" name="terms-checkbox-2" />
+                    <Field
+                      orientation="horizontal"
+                      className="mb-3 mt-2"
+                      data-invalid={!!errors.terms}
+                    >
+                      <Controller
+                        name="terms"
+                        control={control}
+                        render={({ field }) => (
+                          <Checkbox
+                            id="terms-checkbox-2"
+                            checked={field.value}
+                            onCheckedChange={field.onChange}
+                          />
+                        )}
+                      />
                       <FieldContent>
                         <FieldLabel htmlFor="terms-checkbox-2">
                           Принять условия и положения
@@ -249,6 +305,11 @@ export const RegisterPage = () => {
                         </FieldDescription>
                       </FieldContent>
                     </Field>
+                    {errors.terms && (
+                      <div className="text-sm text-destructive">
+                        {errors.terms.message}
+                      </div>
+                    )}
                   </>
                 )}
 
