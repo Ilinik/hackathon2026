@@ -7,7 +7,6 @@ export function AdminHeader({ onCreateUser, onCreateRole }) {
     <header className="mb-4 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
       <div className="space-y-1">
         <h1 className="text-xl font-semibold tracking-tight">Админ-панель</h1>
-        <p className="text-sm text-muted-foreground">Управление пользователями, ролями и правами доступа (MVP).</p>
       </div>
 
       <div className="flex flex-col gap-2 sm:flex-row sm:items-center">

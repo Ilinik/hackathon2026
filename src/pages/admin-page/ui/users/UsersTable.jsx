@@ -1,9 +1,11 @@
+// src/features/admin/ui/users/UsersTable.jsx
 import React from 'react';
-import { MoreVertical, Pencil, Trash2, KeyRound, UserCog } from 'lucide-react';
+import { MoreVertical, Pencil, Trash2, KeyRound, UserCog, CheckCircle2, XCircle } from 'lucide-react';
+
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -16,14 +18,7 @@ import {
 /**
  * Таблица пользователей + действия
  */
-export function UsersTable({
-                             users, // filteredUsers
-                             rolesMap,
-                             getStatusBadge,
-                             onEditUser,
-                             onToggleUserStatus,
-                             onDeleteUser,
-                           }) {
+export function UsersTable({ users, rolesMap, getStatusBadge, onEditUser, onToggleUserStatus, onDeleteUser }) {
   return (
     <Card className="rounded shadow transition-all duration-200">
       <CardHeader className="p-4">
@@ -129,3 +124,25 @@ export function UsersTable({
     </Card>
   );
 }
+
+UsersTable.StatusBadge = function StatusBadge({ status }) {
+  if (status === 'active') {
+    return (
+      <Badge className="rounded transition-colors" variant="secondary">
+        <span className="inline-flex items-center gap-2">
+          <CheckCircle2 className="h-4 w-4" aria-hidden="true" />
+          Активен
+        </span>
+      </Badge>
+    );
+  }
+
+  return (
+    <Badge className="rounded transition-colors" variant="destructive">
+      <span className="inline-flex items-center gap-2">
+        <XCircle className="h-4 w-4" aria-hidden="true" />
+        Заблокирован
+      </span>
+    </Badge>
+  );
+};

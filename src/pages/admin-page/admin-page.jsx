@@ -18,7 +18,6 @@ import { initialRolesMock, initialUsersMock } from '@/pages/admin-page/const/adm
 
 
 /**
- * Админ-панель: UI (MVP).
  * Интеграция с API предполагается через пропсы/хуки.
  */
 export const AdminPage = ({

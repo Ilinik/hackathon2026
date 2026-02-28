@@ -131,7 +131,6 @@ export function RolesTable({ roles, canDeleteRole, onEditRole, onDeleteRole }) {
         <div className="mt-4 rounded border p-4 text-sm text-muted-foreground">
           <p className="flex items-start gap-2">
             <KeyRound className="mt-0.5 h-4 w-4 text-blue-500" aria-hidden="true" />
-            <span>Для MVP удаление роли запрещено, если роль защищена или назначена хотя бы одному пользователю.</span>
           </p>
         </div>
       </CardContent>
