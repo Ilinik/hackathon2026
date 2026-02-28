@@ -1,13 +1,21 @@
 import { Container } from '@/components/layouts/container';
 import { Button } from '@/components/ui/button';
 import { Card, CardDescription, CardTitle } from '@/components/ui/card';
-import { Field, FieldGroup, FieldLabel, FieldSet } from '@/components/ui/field';
+import {
+  Field,
+  FieldGroup,
+  FieldLabel,
+  FieldSet,
+  FieldContent,
+  FieldDescription,
+} from '@/components/ui/field';
 import { Input } from '@/components/ui/input';
 import { Progress } from '@/components/ui/progress';
 import { useAuth } from '@/hooks/useAuth';
 import { useState } from 'react';
-import { useNavigate } from 'react-router';
+import { useNavigate, Link } from 'react-router';
 import { Calendar } from '@/components/ui/calendar';
+import { Checkbox } from '@/components/ui/checkbox';
 import {
   Popover,
   PopoverContent,
@@ -91,9 +99,9 @@ export const RegisterPage = () => {
   return (
     <div className="flex items-center justify-center min-h-[calc(100vh-250px)]">
       <Container className="flex items-center justify-center">
-        <Card className="w-full max-w-sm">
+        <Card className="w-full max-w-lg mx-4 sm:mx-6 lg:mx-8">
           <form onSubmit={handleSubmit}>
-            <FieldSet className="w-full max-w-xs mx-auto">
+            <FieldSet className="w-full max-w-md sm:max-w-lg mx-auto px-4 sm:px-6 py-2">
               <FieldGroup className="gap-3">
                 <CardTitle>Регистрация аккаунта</CardTitle>
               </FieldGroup>
@@ -218,6 +226,24 @@ export const RegisterPage = () => {
                         onChange={(e) => setPassword(e.target.value)}
                       />
                     </Field>
+
+                    <Field orientation="horizontal" className="mb-3 mt-2">
+                      <Checkbox id="terms-checkbox-2" name="terms-checkbox-2" />
+                      <FieldContent>
+                        <FieldLabel htmlFor="terms-checkbox-2">
+                          Принять условия и положения
+                        </FieldLabel>
+                        <FieldDescription>
+                          Нажав на эту галочку, вы соглашаетесь с{' '}
+                          <Link
+                            className="underline"
+                            to="https://normativ.kontur.ru/document?moduleId=1&documentId=501173"
+                          >
+                            условиями.
+                          </Link>
+                        </FieldDescription>
+                      </FieldContent>
+                    </Field>
                   </>
                 )}
 
@@ -232,6 +258,7 @@ export const RegisterPage = () => {
                       Назад
                     </Button>
                   )}
+
                   {currentStep < totalSteps ? (
                     <Button
                       type="button"
