@@ -31,6 +31,7 @@ export const RegisterPage = () => {
   const [open, setOpen] = useState(false);
   const [date, setDate] = useState(undefined);
   const [parentFullName, setParentFullName] = useState('');
+  const [parentPhoneNumber, setParentPhoneNumber] = useState('');
 
   const progress = (currentStep / totalSteps) * 100;
 
@@ -162,18 +163,35 @@ export const RegisterPage = () => {
                     </Field>
 
                     {isUnder14() && (
-                      <Field>
-                        <FieldLabel htmlFor="parentFullName">
-                          ФИО родителя
-                        </FieldLabel>
-                        <Input
-                          id="parentFullName"
-                          type="text"
-                          placeholder="Иванов Иван Иванович"
-                          value={parentFullName}
-                          onChange={(e) => setParentFullName(e.target.value)}
-                        />
-                      </Field>
+                      <>
+                        <Field>
+                          <FieldLabel htmlFor="parentFullName">
+                            ФИО родителя
+                          </FieldLabel>
+                          <Input
+                            id="parentFullName"
+                            type="text"
+                            placeholder="Иванов Иван Иванович"
+                            value={parentFullName}
+                            onChange={(e) => setParentFullName(e.target.value)}
+                          />
+                        </Field>
+
+                        <Field>
+                          <FieldLabel htmlFor="form-phone">
+                            Телефон родителя
+                          </FieldLabel>
+                          <Input
+                            id="form-phone"
+                            type="tel"
+                            placeholder="+7 (555) 123-4567"
+                            value={parentPhoneNumber}
+                            onChange={(e) =>
+                              setParentPhoneNumber(e.target.value)
+                            }
+                          />
+                        </Field>
+                      </>
                     )}
                   </>
                 )}
