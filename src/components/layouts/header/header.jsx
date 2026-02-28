@@ -18,6 +18,11 @@ export const Header = () => {
 
   const navigate = useNavigate();
 
+  const onLogout = () => {
+    logout();
+    navigate(StaticLinks.home);
+  };
+
   return (
     <header className="py-5">
       <Container>
@@ -30,7 +35,10 @@ export const Header = () => {
             {isAuth ? (
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
-                  <Button variant="outline">{user.surname} {user.name.charAt(0)}. {user.patronymic.charAt(0)}.</Button>
+                  <Button variant="outline">
+                    {user.surname} {user.name.charAt(0)}.{' '}
+                    {user.patronymic.charAt(0)}.
+                  </Button>
                 </DropdownMenuTrigger>
                 <DropdownMenuContent align="end">
                   <DropdownMenuItem>
@@ -38,21 +46,18 @@ export const Header = () => {
                     Настройки
                   </DropdownMenuItem>
                   <DropdownMenuSeparator />
-                  { user.role === "ADMIN" && (
+                  {user.role === 'ADMIN' && (
                     <>
-                      <DropdownMenuItem onClick={() => navigate(StaticLinks.adminHome)}>
+                      <DropdownMenuItem
+                        onClick={() => navigate(StaticLinks.adminHome)}
+                      >
                         <UserLock />
                         Админ панель
                       </DropdownMenuItem>
                       <DropdownMenuSeparator />
                     </>
                   )}
-                  <DropdownMenuItem
-                    variant="destructive"
-                    onClick={() => {
-                      logout();
-                    }}
-                  >
+                  <DropdownMenuItem variant="destructive" onClick={onLogout}>
                     <LogOutIcon />
                     Выйти из аккаунта
                   </DropdownMenuItem>

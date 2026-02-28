@@ -77,6 +77,13 @@ export const LoginPage = () => {
                       type="password"
                       placeholder="••••••••"
                       type={showPassword ? 'text' : 'password'}
+                      {...register('password', {
+                        required: 'Пароль обязателен',
+                        minLength: {
+                          value: 8,
+                          message: 'Пароль должен содержать минимум 8 символов',
+                        },
+                      })}
                     />
                     <Button
                       className="absolute top-0 right-0 h-full px-3 hover:bg-transparent"
