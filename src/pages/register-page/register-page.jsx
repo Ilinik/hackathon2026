@@ -25,11 +25,13 @@ import {
 import { useForm, Controller } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { registerSchema, calculateAge } from '@/lib/validation';
+import { Eye, EyeOff } from 'lucide-react';
 
 export const RegisterPage = () => {
   const { isLoading, registration } = useAuth();
   const navigate = useNavigate();
 
+  const [showPassword, setShowPassword] = useState(false);
   const [currentStep, setCurrentStep] = useState(1);
   const totalSteps = 2;
   const [open, setOpen] = useState(false);
@@ -59,18 +61,13 @@ export const RegisterPage = () => {
 
   const dateOfBirth = watch('dateOfBirth');
   const age = calculateAge(dateOfBirth);
-  const isUnder14 = age < 14;
+  const isUnder14 = !!dateOfBirth && age < 14;
 
   const progress = (currentStep / totalSteps) * 100;
 
-  const handleNext = async () => {
-    const step1Fields = ['surname', 'name', 'patronymic', 'dateOfBirth'];
-    if (isUnder14) {
-      step1Fields.push('parentFullName', 'parentPhone');
-    }
-    const isValid = await trigger(step1Fields);
-    if (isValid) {
-      setCurrentStep(currentStep + 1);
+  const handleNext = () => {
+    if (isStep1Valid) {
+      setCurrentStep(s => s + 1);
     }
   };
 
@@ -263,12 +260,36 @@ export const RegisterPage = () => {
 
                     <Field data-invalid={!!errors.password}>
                       <FieldLabel htmlFor="password">Пароль</FieldLabel>
-                      <Input
-                        id="password"
-                        type="password"
-                        placeholder="••••••••"
-                        {...register('password')}
-                      />
+
+                      <div className="relative">
+                        <Input
+                          id="password"
+                          type="password"
+                          placeholder="••••••••"
+                          type={showPassword ? 'text' : 'password'}
+                          {...register('password', {
+                            required: 'Пароль обязателен',
+                            minLength: {
+                              value: 8,
+                              message:
+                                'Пароль должен содержать минимум 8 символов',
+                            },
+                          })}
+                        />
+                        <Button
+                          className="absolute top-0 right-0 h-full px-3 hover:bg-transparent"
+                          onClick={() => setShowPassword(!showPassword)}
+                          size="icon"
+                          type="button"
+                          variant="ghost"
+                        >
+                          {showPassword ? (
+                            <EyeOff className="h-4 w-4 text-muted-foreground" />
+                          ) : (
+                            <Eye className="h-4 w-4 text-muted-foreground" />
+                          )}
+                        </Button>
+                      </div>
                       <FieldError
                         errors={errors.password ? [errors.password] : []}
                       />
