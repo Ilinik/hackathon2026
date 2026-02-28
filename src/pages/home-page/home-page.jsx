@@ -23,7 +23,7 @@ export const HomePage = () => {
         <Button
           type="button"
           variant="default"
-          onClick={() => nav(StaticLinks.admin)}
+          onClick={() => nav(StaticLinks.adminHome)}
         >
           На админ панель
         </Button>
