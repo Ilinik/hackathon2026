@@ -10,13 +10,32 @@ export const AuthProvider = ({ children }) => {
   const [isLoading, setIsLoading] = useState(false);
   const [isCheckAuthLoading, setIsCheckAuthLoading] = useState(false);
 
-  const registration = async ({ username, email, password }) => {
+  const registration = async ({
+    email,
+    password,
+    name,
+    surname,
+    patronymic,
+    age,
+    parentFullName,
+    parentPhone,
+  }) => {
     setIsLoading(true);
     try {
-      const response = await AuthService.registration(username, email, password);
+      const response = await AuthService.registration(
+        email,
+        password,
+        name,
+        surname,
+        patronymic,
+        age,
+        parentFullName,
+        parentPhone,
+      );
       console.log(response);
-      setUser(response.data.user);
-      setItem('token', response.data.tokens.accessToken);
+      const { accessToken, ...userData } = response.data;
+      setUser(userData);
+      setItem('token', accessToken);
       setIsAuth(true);
     } catch (e) {
       console.log(e);

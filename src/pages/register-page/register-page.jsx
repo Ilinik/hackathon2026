@@ -61,11 +61,12 @@ export const RegisterPage = () => {
       await registration({
         email,
         password,
-        firstName,
-        lastName,
-        middleName,
-        dateOfBirth: date,
+        name: firstName,
+        surname: lastName,
+        patronymic: middleName,
+        age: calculateAge(),
         parentFullName: isUnder14() ? parentFullName : undefined,
+        parentPhone: isUnder14() ? parentPhoneNumber : undefined,
       });
       navigate('/');
     } catch (error) {
@@ -73,8 +74,8 @@ export const RegisterPage = () => {
     }
   };
 
-  const isUnder14 = () => {
-    if (!date) return false;
+  const calculateAge = () => {
+    if (!date) return 0;
     const today = new Date();
     const birthDate = new Date(date);
     let age = today.getFullYear() - birthDate.getFullYear();
@@ -85,7 +86,11 @@ export const RegisterPage = () => {
     ) {
       age--;
     }
-    return age < 14;
+    return age;
+  };
+
+  const isUnder14 = () => {
+    return calculateAge() < 14;
   };
 
   const isStep1Valid =
