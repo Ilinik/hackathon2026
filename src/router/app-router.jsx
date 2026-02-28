@@ -4,7 +4,7 @@ import { Routes, Route } from 'react-router';
 import { routeConfig, adminRouteConfig } from './config.js';
 import { useAuth } from '@/hooks/useAuth.js';
 import { NotFoundPage } from '@/pages/not-found-page';
-import { Loader } from '@/components/ui/Loader.jsx';
+import { Loader } from '@/components/ui/loader.jsx';
 
 export const AppRouter = () => {
   const { user, isCheckAuthLoading } = useAuth();
