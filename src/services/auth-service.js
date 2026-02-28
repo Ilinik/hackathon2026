@@ -9,6 +9,10 @@ export default class AuthService {
     return axiosClient.post('/api/registration', { username, email, password });
   }
 
+  static async checkAuth() {
+    return axiosClient.get('/api/auth/me');
+  }
+
   static async logout() {
     return axiosClient.post('/api/logout');
   }

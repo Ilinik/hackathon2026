@@ -1,7 +1,6 @@
 import { AuthContext } from '@/contexts/auth-context';
 import { useLocalStorage } from '@/hooks/useLocalStorage';
 import AuthService from '@/services/auth-service';
-import axios from 'axios';
 import { useState } from 'react';
 
 export const AuthProvider = ({ children }) => {
@@ -9,15 +8,12 @@ export const AuthProvider = ({ children }) => {
   const [user, setUser] = useState(null);
   const [isAuth, setIsAuth] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
+  const [isCheckAuthLoading, setIsCheckAuthLoading] = useState(false);
 
   const registration = async ({ username, email, password }) => {
     setIsLoading(true);
     try {
-      const response = await AuthService.registration(
-        username,
-        email,
-        password,
-      );
+      const response = await AuthService.registration(username, email, password);
       console.log(response);
       setUser(response.data.user);
       setItem('token', response.data.tokens.accessToken);
@@ -47,33 +43,26 @@ export const AuthProvider = ({ children }) => {
   };
 
   const logout = async () => {
-    setIsLoading(true);
-    try {
-      await AuthService.logout();
-      removeItem('token');
-      setUser(null);
-      setIsAuth(false);
-    } catch (e) {
-      console.log(e);
-      throw e;
-    } finally {
-      setIsLoading(false);
-    }
+    removeItem('token');
+    setUser(null);
+    setIsAuth(false);
   };
 
   const checkAuth = async () => {
+    setIsCheckAuthLoading(true);
+
     try {
-      const response = await axios.get(
-        `${import.meta.env.VITE_API_URL}/api/refresh`,
-        { withCredentials: true },
-      );
-      console.log(response);
-      setUser(response.data.user);
-      setItem('token', response.data.tokens.accessToken);
+      const response = await AuthService.checkAuth();
+
+      const { accessToken, ...userData } = response.data;
+      setUser(userData);
+      setItem('token', accessToken);
       setIsAuth(true);
     } catch (e) {
       console.log(e);
       throw e;
+    } finally {
+      setIsCheckAuthLoading(false);
     }
   };
 
@@ -87,6 +76,7 @@ export const AuthProvider = ({ children }) => {
         login,
         logout,
         checkAuth,
+        isCheckAuthLoading,
       }}
     >
       {children}
