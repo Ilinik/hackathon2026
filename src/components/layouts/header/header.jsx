@@ -9,13 +9,19 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import { ThemeToggle } from '@/components/ui/theme-toggle';
-import { LogOutIcon, SettingsIcon } from 'lucide-react';
+import { LogOutIcon, SettingsIcon, UserLock } from 'lucide-react';
 import { useAuth } from '@/hooks/useAuth';
+import { StaticLinks } from '@/constants/static-links.js';
 
 export const Header = () => {
-  const { isAuth, logout } = useAuth();
+  const { isAuth, logout, user } = useAuth();
 
   const navigate = useNavigate();
+
+  const onLogout = () => {
+    logout();
+    navigate(StaticLinks.home);
+  };
 
   return (
     <header className="py-5">
@@ -29,21 +35,29 @@ export const Header = () => {
             {isAuth ? (
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
-                  <Button variant="outline">My profile</Button>
+                  <Button variant="outline">
+                    {user.surname} {user.name.charAt(0)}.{' '}
+                    {user.patronymic.charAt(0)}.
+                  </Button>
                 </DropdownMenuTrigger>
-                <DropdownMenuContent>
+                <DropdownMenuContent align="end">
                   <DropdownMenuItem>
                     <SettingsIcon />
                     Настройки
                   </DropdownMenuItem>
                   <DropdownMenuSeparator />
-                  <DropdownMenuItem
-                    variant="destructive"
-                    variant="destructive"
-                    onClick={() => {
-                      logout();
-                    }}
-                  >
+                  {user.role === 'ADMIN' && (
+                    <>
+                      <DropdownMenuItem
+                        onClick={() => navigate(StaticLinks.adminHome)}
+                      >
+                        <UserLock />
+                        Админ панель
+                      </DropdownMenuItem>
+                      <DropdownMenuSeparator />
+                    </>
+                  )}
+                  <DropdownMenuItem variant="destructive" onClick={onLogout}>
                     <LogOutIcon />
                     Выйти из аккаунта
                   </DropdownMenuItem>

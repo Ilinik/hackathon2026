@@ -10,6 +10,8 @@ import {
 } from '@/components/ui/field';
 import { Input } from '@/components/ui/input';
 import { useAuth } from '@/hooks/useAuth';
+import { Eye, EyeOff } from 'lucide-react';
+import { useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useNavigate } from 'react-router';
@@ -19,6 +21,8 @@ import { loginSchema } from '@/lib/validation';
 export const LoginPage = () => {
   const { isLoading, login } = useAuth();
   const navigate = useNavigate();
+
+  const [showPassword, setShowPassword] = useState(false);
 
   const {
     register,
@@ -70,12 +74,34 @@ export const LoginPage = () => {
                 </Field>
                 <Field data-invalid={!!errors.password}>
                   <FieldLabel htmlFor="password">Пароль</FieldLabel>
-                  <Input
-                    id="password"
-                    type="password"
-                    placeholder="••••••••"
-                    {...register('password')}
-                  />
+                  <div className="relative">
+                    <Input
+                      id="password"
+                      type="password"
+                      placeholder="••••••••"
+                      type={showPassword ? 'text' : 'password'}
+                      {...register('password', {
+                        required: 'Пароль обязателен',
+                        minLength: {
+                          value: 8,
+                          message: 'Пароль должен содержать минимум 8 символов',
+                        },
+                      })}
+                    />
+                    <Button
+                      className="absolute top-0 right-0 h-full px-3 hover:bg-transparent"
+                      onClick={() => setShowPassword(!showPassword)}
+                      size="icon"
+                      type="button"
+                      variant="ghost"
+                    >
+                      {showPassword ? (
+                        <EyeOff className="h-4 w-4 text-muted-foreground" />
+                      ) : (
+                        <Eye className="h-4 w-4 text-muted-foreground" />
+                      )}
+                    </Button>
+                  </div>
                   <FieldError
                     errors={errors.password ? [errors.password] : []}
                   />

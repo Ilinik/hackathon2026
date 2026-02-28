@@ -10,15 +10,17 @@ export function AdminHeader({ onCreateUser, onCreateRole }) {
       </div>
 
       <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
-        <Button
-          type="button"
-          variant="default"
-          onClick={onCreateUser}
-          className="rounded bg-blue-500 transition-all duration-200 hover:bg-blue-600 hover:shadow-lg focus-visible:ring-2 focus-visible:ring-blue-500"
-        >
-          <Plus className="mr-2 h-4 w-4" aria-hidden="true" />
-          Добавить пользователя
-        </Button>
+        {onCreateUser && (
+          <Button
+            type="button"
+            variant="default"
+            onClick={onCreateUser}
+            className="rounded bg-blue-500 transition-all duration-200 hover:bg-blue-600 hover:shadow-lg focus-visible:ring-2 focus-visible:ring-blue-500"
+          >
+            <Plus className="mr-2 h-4 w-4" aria-hidden="true" />
+            Добавить пользователя
+          </Button>
+        )}
 
         <Button
           type="button"

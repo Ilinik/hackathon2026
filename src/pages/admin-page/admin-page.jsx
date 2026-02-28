@@ -14,23 +14,38 @@ import { RolesToolbar } from './ui/roles/RolesToolbar.jsx';
 import { RolesTable } from './ui/roles/RolesTable.jsx';
 import { RoleDialog } from './ui/roles/RoleDialog.jsx';
 import { DeleteRoleDialog } from './ui/roles/DeleteRoleDialog.jsx';
-import { initialRolesMock, initialUsersMock } from '@/pages/admin-page/const/admin.mock.js';
 
+import { initialRolesMock } from '@/pages/admin-page/const/admin.mock.js';
+import { useAdminUsers } from '@/hooks/useAdminUsers.js';
+import { Loader } from '@/components/ui/loader.jsx';
 
-/**
- * Интеграция с API предполагается через пропсы/хуки.
- */
+const API_ROLES = [
+  { id: 'USER', name: 'Пользователь' },
+  { id: 'ADMIN', name: 'Администратор' },
+];
+
+const EMPTY_USER_FORM = {
+  email: '',
+  name: '',
+  surname: '',
+  patronymic: '',
+  age: '',
+  parentFullName: '',
+  parentPhone: '',
+  role: 'USER',
+};
+
 export const AdminPage = ({
-                            initialUsers = initialUsersMock,
-                            initialRoles = initialRolesMock,
-                            onUsersChange,
-                            onRolesChange,
-                          } = {}) => {
+  initialRoles = initialRolesMock,
+  onRolesChange,
+} = {}) => {
+  const { users, isLoading, updateUser, toggleStatus, deleteUser } =
+    useAdminUsers();
+
   // вкладка
   const [tab, setTab] = useState('users');
 
-  // сущности
-  const [users, setUsers] = useState(initialUsers);
+  // роли (мок)
   const [roles, setRoles] = useState(initialRoles);
 
   // фильтры/поиск
@@ -47,12 +62,7 @@ export const AdminPage = ({
   const [deletingRole, setDeletingRole] = useState(null);
 
   // формы
-  const [userForm, setUserForm] = useState({
-    fullName: '',
-    email: '',
-    status: 'active',
-    roleId: '',
-  });
+  const [userForm, setUserForm] = useState(EMPTY_USER_FORM);
 
   const [roleForm, setRoleForm] = useState({
     name: '',
@@ -63,22 +73,24 @@ export const AdminPage = ({
   // ===== вычисления =====
   const rolesMap = useMemo(() => {
     const map = new Map();
-    roles.forEach(r => map.set(r.id, r));
+    API_ROLES.forEach((r) => map.set(r.id, r));
     return map;
-  }, [roles]);
+  }, []);
 
   const filteredUsers = useMemo(() => {
     const q = userQuery.trim().toLowerCase();
     return users
-      .filter(u => {
+      .filter((u) => {
         const matchesQuery =
           !q ||
           u.fullName.toLowerCase().includes(q) ||
           u.email.toLowerCase().includes(q) ||
           (rolesMap.get(u.roleId)?.name || '').toLowerCase().includes(q);
 
-        const matchesRole = userRoleFilter === 'all' ? true : u.roleId === userRoleFilter;
-        const matchesStatus = userStatusFilter === 'all' ? true : u.status === userStatusFilter;
+        const matchesRole =
+          userRoleFilter === 'all' ? true : u.roleId === userRoleFilter;
+        const matchesStatus =
+          userStatusFilter === 'all' ? true : u.status === userStatusFilter;
 
         return matchesQuery && matchesRole && matchesStatus;
       })
@@ -88,7 +100,7 @@ export const AdminPage = ({
   const filteredRoles = useMemo(() => {
     const q = roleQuery.trim().toLowerCase();
     return roles
-      .filter(r => {
+      .filter((r) => {
         if (!q) return true;
         return (
           r.name.toLowerCase().includes(q) ||
@@ -100,8 +112,8 @@ export const AdminPage = ({
   }, [roles, roleQuery]);
 
   const stats = useMemo(() => {
-    const active = users.filter(u => u.status === 'active').length;
-    const blocked = users.filter(u => u.status === 'blocked').length;
+    const active = users.filter((u) => u.status === 'active').length;
+    const blocked = users.filter((u) => u.status === 'blocked').length;
     return {
       usersTotal: users.length,
       usersActive: active,
@@ -110,94 +122,59 @@ export const AdminPage = ({
     };
   }, [users, roles]);
 
-  // ===== эмит в коллбеки =====
-  const emitUsersChange = useCallback(
-    next => {
-      setUsers(next);
-      onUsersChange?.(next);
-    },
-    [onUsersChange]
-  );
-
   const emitRolesChange = useCallback(
-    next => {
+    (next) => {
       setRoles(next);
       onRolesChange?.(next);
     },
-    [onRolesChange]
+    [onRolesChange],
   );
 
   // ===== users handlers =====
-  const handleOpenEditUser = useCallback(user => {
+  const handleOpenEditUser = useCallback((user) => {
     setEditingUser(user);
     setUserForm({
-      fullName: user.fullName,
       email: user.email,
-      status: user.status,
-      roleId: user.roleId,
+      name: user.raw.name,
+      surname: user.raw.surname,
+      patronymic: user.raw.patronymic ?? '',
+      age: String(user.raw.age ?? ''),
+      parentFullName: user.raw.parentFullName ?? '',
+      parentPhone: user.raw.parentPhone ?? '',
+      role: user.roleId,
     });
   }, []);
 
-  const handleOpenCreateUser = useCallback(() => {
-    setEditingUser({ id: null });
-    setUserForm({
-      fullName: '',
-      email: '',
-      status: 'active',
-      roleId: roles[0]?.id || '',
+  const handleSaveUser = useCallback(async () => {
+    if (!editingUser?.id) return;
+    await updateUser(editingUser.id, {
+      email: userForm.email.trim(),
+      name: userForm.name.trim(),
+      surname: userForm.surname.trim(),
+      patronymic: userForm.patronymic.trim() || null,
+      age: Number(userForm.age),
+      parentFullName: userForm.parentFullName.trim() || null,
+      parentPhone: userForm.parentPhone.trim() || null,
+      role: userForm.role,
     });
-  }, [roles]);
-
-  const handleSaveUser = useCallback(() => {
-    const name = userForm.fullName.trim();
-    const email = userForm.email.trim();
-    if (!name || !email || !userForm.roleId) return;
-
-    if (editingUser?.id) {
-      const next = users.map(u =>
-        u.id === editingUser.id ? { ...u, fullName: name, email, status: userForm.status, roleId: userForm.roleId } : u
-      );
-      emitUsersChange(next);
-    } else {
-      const id = `u_${Math.random().toString(16).slice(2, 8)}`;
-      const today = new Date().toISOString().slice(0, 10);
-      const next = [
-        ...users,
-        {
-          id,
-          fullName: name,
-          email,
-          status: userForm.status,
-          roleId: userForm.roleId,
-          createdAt: today,
-          lastLoginAt: '—',
-        },
-      ];
-      emitUsersChange(next);
-    }
-
     setEditingUser(null);
-  }, [editingUser, emitUsersChange, userForm, users]);
+  }, [editingUser, updateUser, userForm]);
 
   const handleToggleUserStatus = useCallback(
-    user => {
-      const next = users.map(u =>
-        u.id === user.id ? { ...u, status: u.status === 'active' ? 'blocked' : 'active' } : u
-      );
-      emitUsersChange(next);
+    async (user) => {
+      await toggleStatus(user);
     },
-    [users, emitUsersChange]
+    [toggleStatus],
   );
 
-  const handleConfirmDeleteUser = useCallback(() => {
+  const handleConfirmDeleteUser = useCallback(async () => {
     if (!deletingUser) return;
-    const next = users.filter(u => u.id !== deletingUser.id);
-    emitUsersChange(next);
+    await deleteUser(deletingUser.id);
     setDeletingUser(null);
-  }, [deletingUser, users, emitUsersChange]);
+  }, [deletingUser, deleteUser]);
 
   // ===== roles handlers =====
-  const handleOpenEditRole = useCallback(role => {
+  const handleOpenEditRole = useCallback((role) => {
     setEditingRole(role);
     setRoleForm({
       name: role.name,
@@ -216,17 +193,22 @@ export const AdminPage = ({
     const description = roleForm.description.trim();
     const permissions = roleForm.permissions
       .split('\n')
-      .map(p => p.trim())
+      .map((p) => p.trim())
       .filter(Boolean);
 
     if (!name) return;
 
     if (editingRole?.id) {
-      const next = roles.map(r => (r.id === editingRole.id ? { ...r, name, description, permissions } : r));
+      const next = roles.map((r) =>
+        r.id === editingRole.id ? { ...r, name, description, permissions } : r,
+      );
       emitRolesChange(next);
     } else {
       const id = `r_${Math.random().toString(16).slice(2, 8)}`;
-      const next = [...roles, { id, name, description, permissions, protected: false }];
+      const next = [
+        ...roles,
+        { id, name, description, permissions, protected: false },
+      ];
       emitRolesChange(next);
     }
 
@@ -241,37 +223,28 @@ export const AdminPage = ({
       return;
     }
 
-    const inUse = users.some(u => u.roleId === deletingRole.id);
-    if (inUse) {
-      setDeletingRole(null);
-      return;
-    }
-
-    const next = roles.filter(r => r.id !== deletingRole.id);
+    const next = roles.filter((r) => r.id !== deletingRole.id);
     emitRolesChange(next);
     setDeletingRole(null);
-  }, [deletingRole, roles, users, emitRolesChange]);
+  }, [deletingRole, roles, emitRolesChange]);
 
   // ===== UI helpers =====
   const getStatusBadge = useCallback(
-    status => <UsersTable.StatusBadge status={status} />,
-    []
+    (status) => <UsersTable.StatusBadge status={status} />,
+    [],
   );
 
-  const canDeleteRole = useCallback(
-    role => {
-      if (role.protected) return { ok: false, reason: 'Защищённая роль' };
-      const inUse = users.some(u => u.roleId === role.id);
-      if (inUse) return { ok: false, reason: 'Роль используется пользователями' };
-      return { ok: true, reason: '' };
-    },
-    [users]
-  );
+  const canDeleteRole = useCallback((role) => {
+    if (role.protected) return { ok: false, reason: 'Защищённая роль' };
+    return { ok: true, reason: '' };
+  }, []);
+
+  if (isLoading) return <Loader />;
 
   return (
     <Container>
       <main className="w-full leading-relaxed">
-        <AdminHeader onCreateUser={handleOpenCreateUser} onCreateRole={handleOpenCreateRole} />
+        <AdminHeader onCreateRole={handleOpenCreateRole} />
         <AdminStats stats={stats} />
 
         <section aria-label="Разделы администрирования">
@@ -294,10 +267,13 @@ export const AdminPage = ({
                   onUserRoleFilterChange={setUserRoleFilter}
                   userStatusFilter={userStatusFilter}
                   onUserStatusFilterChange={setUserStatusFilter}
-                  roles={roles}
+                  roles={API_ROLES}
                 />
               ) : (
-                <RolesToolbar roleQuery={roleQuery} onRoleQueryChange={setRoleQuery} />
+                <RolesToolbar
+                  roleQuery={roleQuery}
+                  onRoleQueryChange={setRoleQuery}
+                />
               )}
             </div>
 
@@ -325,18 +301,17 @@ export const AdminPage = ({
 
         <UserDialog
           open={!!editingUser}
-          onOpenChange={open => !open && setEditingUser(null)}
+          onOpenChange={(open) => !open && setEditingUser(null)}
           editingUser={editingUser}
           userForm={userForm}
           setUserForm={setUserForm}
-          roles={roles}
           onSave={handleSaveUser}
           onCancel={() => setEditingUser(null)}
         />
 
         <DeleteUserDialog
           open={!!deletingUser}
-          onOpenChange={open => !open && setDeletingUser(null)}
+          onOpenChange={(open) => !open && setDeletingUser(null)}
           user={deletingUser}
           onCancel={() => setDeletingUser(null)}
           onConfirm={handleConfirmDeleteUser}
@@ -344,7 +319,7 @@ export const AdminPage = ({
 
         <RoleDialog
           open={!!editingRole}
-          onOpenChange={open => !open && setEditingRole(null)}
+          onOpenChange={(open) => !open && setEditingRole(null)}
           editingRole={editingRole}
           roleForm={roleForm}
           setRoleForm={setRoleForm}
@@ -354,7 +329,7 @@ export const AdminPage = ({
 
         <DeleteRoleDialog
           open={!!deletingRole}
-          onOpenChange={open => !open && setDeletingRole(null)}
+          onOpenChange={(open) => !open && setDeletingRole(null)}
           role={deletingRole}
           canDeleteRole={canDeleteRole}
           onCancel={() => setDeletingRole(null)}
