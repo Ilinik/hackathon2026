@@ -2,7 +2,8 @@ import { StaticLinks } from '@/constants/static-links';
 import { HomePage } from '@/pages/home-page';
 import { LoginPage } from '@/pages/login-page';
 import { RegisterPage } from '@/pages/register-page';
-import AdminUsersRolesPanel from '@/pages/admin-page/admin-page.jsx';
+import { AdminPage } from '@/pages/admin-page';
+import { NotFoundPage } from '@/pages/not-found-page';
 
 export const routeConfig = [
   {
@@ -18,14 +19,18 @@ export const routeConfig = [
     Component: RegisterPage,
   },
   {
-    path: StaticLinks.admin,
-    Component: AdminUsersRolesPanel,
-  }
+    path: '*',
+    Component: NotFoundPage,
+  },
 ];
 
 export const adminRouteConfig = [
   {
     path: StaticLinks.adminHome,
-    Component: HomePage,
+    Component: AdminPage,
+  },
+  {
+    path: '*',
+    Component: NotFoundPage,
   },
 ];
