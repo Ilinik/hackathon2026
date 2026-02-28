@@ -7,6 +7,12 @@ import { Progress } from '@/components/ui/progress';
 import { useAuth } from '@/hooks/useAuth';
 import { useState } from 'react';
 import { useNavigate } from 'react-router';
+import { Calendar } from '@/components/ui/calendar';
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from '@/components/ui/popover';
 
 export const RegisterPage = () => {
   const { isLoading, registration } = useAuth();
@@ -21,6 +27,10 @@ export const RegisterPage = () => {
 
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+
+  const [open, setOpen] = useState(false);
+  const [date, setDate] = useState(undefined);
+  const [parentFullName, setParentFullName] = useState('');
 
   const progress = (currentStep / totalSteps) * 100;
 
@@ -45,6 +55,8 @@ export const RegisterPage = () => {
         firstName,
         lastName,
         middleName,
+        dateOfBirth: date,
+        parentFullName: isUnder14() ? parentFullName : undefined,
       });
       navigate('/');
     } catch (error) {
@@ -52,7 +64,27 @@ export const RegisterPage = () => {
     }
   };
 
-  const isStep1Valid = firstName && lastName && middleName;
+  const isUnder14 = () => {
+    if (!date) return false;
+    const today = new Date();
+    const birthDate = new Date(date);
+    let age = today.getFullYear() - birthDate.getFullYear();
+    const monthDiff = today.getMonth() - birthDate.getMonth();
+    if (
+      monthDiff < 0 ||
+      (monthDiff === 0 && today.getDate() < birthDate.getDate())
+    ) {
+      age--;
+    }
+    return age < 14;
+  };
+
+  const isStep1Valid =
+    firstName &&
+    lastName &&
+    middleName &&
+    date &&
+    (!isUnder14() || parentFullName);
   const isStep2Valid = email && password;
 
   return (
@@ -63,17 +95,6 @@ export const RegisterPage = () => {
             <FieldSet className="w-full max-w-xs mx-auto">
               <FieldGroup className="gap-3">
                 <CardTitle>Регистрация аккаунта</CardTitle>
-                <FieldGroup>
-                  <CardDescription>
-                    {currentStep === 1
-                      ? 'Шаг 1: Введите ваши данные'
-                      : 'Шаг 2: Введите email и пароль'}
-                  </CardDescription>
-                  <Progress value={progress} className="h-2" />
-                  <div className="text-xs text-muted-foreground text-center">
-                    Шаг {currentStep} из {totalSteps}
-                  </div>
-                </FieldGroup>
               </FieldGroup>
 
               <FieldGroup className="gap-3">
@@ -109,6 +130,51 @@ export const RegisterPage = () => {
                         onChange={(e) => setMiddleName(e.target.value)}
                       />
                     </Field>
+
+                    <Field className="w-44">
+                      <FieldLabel htmlFor="date">Дата рождения</FieldLabel>
+                      <Popover open={open} onOpenChange={setOpen}>
+                        <PopoverTrigger asChild>
+                          <Button
+                            variant="outline"
+                            id="date"
+                            className="justify-start font-normal"
+                          >
+                            {date ? date.toLocaleDateString() : 'Выбрать дату'}
+                          </Button>
+                        </PopoverTrigger>
+                        <PopoverContent
+                          className="w-auto overflow-hidden p-0"
+                          align="start"
+                        >
+                          <Calendar
+                            mode="single"
+                            selected={date}
+                            defaultMonth={date}
+                            captionLayout="dropdown"
+                            onSelect={(date) => {
+                              setDate(date);
+                              setOpen(false);
+                            }}
+                          />
+                        </PopoverContent>
+                      </Popover>
+                    </Field>
+
+                    {isUnder14() && (
+                      <Field>
+                        <FieldLabel htmlFor="parentFullName">
+                          ФИО родителя
+                        </FieldLabel>
+                        <Input
+                          id="parentFullName"
+                          type="text"
+                          placeholder="Иванов Иван Иванович"
+                          value={parentFullName}
+                          onChange={(e) => setParentFullName(e.target.value)}
+                        />
+                      </Field>
+                    )}
                   </>
                 )}
 
@@ -168,6 +234,20 @@ export const RegisterPage = () => {
                   )}
                 </Field>
               </FieldGroup>
+
+              <div className="pt-4 border-t border-border">
+                <FieldGroup className="gap-2">
+                  <CardDescription className="text-center text-xs">
+                    {currentStep === 1
+                      ? 'Шаг 1: Введите ваши данные'
+                      : 'Шаг 2: Введите email и пароль'}
+                  </CardDescription>
+                  <Progress value={progress} className="h-1.5" />
+                  <div className="text-[10px] text-muted-foreground text-center font-medium">
+                    Шаг {currentStep} из {totalSteps}
+                  </div>
+                </FieldGroup>
+              </div>
             </FieldSet>
           </form>
         </Card>
