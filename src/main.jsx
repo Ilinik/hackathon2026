@@ -6,11 +6,9 @@ import { RootProvider } from './components/providers/root-provider';
 import './assets/styles/main.css';
 
 createRoot(document.getElementById('root')).render(
-  <StrictMode>
-    <BrowserRouter>
-      <RootProvider>
-        <App />
-      </RootProvider>
-    </BrowserRouter>
-  </StrictMode>,
+  <BrowserRouter>
+    <RootProvider>
+      <App />
+    </RootProvider>
+  </BrowserRouter>,
 );

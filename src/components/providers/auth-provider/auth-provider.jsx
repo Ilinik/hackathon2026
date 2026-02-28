@@ -13,7 +13,11 @@ export const AuthProvider = ({ children }) => {
   const registration = async ({ username, email, password }) => {
     setIsLoading(true);
     try {
-      const response = await AuthService.registration(username, email, password);
+      const response = await AuthService.registration(
+        username,
+        email,
+        password,
+      );
       console.log(response);
       setUser(response.data.user);
       setItem('token', response.data.tokens.accessToken);
@@ -54,9 +58,7 @@ export const AuthProvider = ({ children }) => {
     try {
       const response = await AuthService.checkAuth();
 
-      const { accessToken, ...userData } = response.data;
-      setUser(userData);
-      setItem('token', accessToken);
+      setUser(response.data);
       setIsAuth(true);
     } catch (e) {
       console.log(e);
