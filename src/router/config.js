@@ -17,3 +17,10 @@ export const routeConfig = [
     Component: RegisterPage,
   },
 ];
+
+export const adminRouteConfig = [
+  {
+    path: StaticLinks.adminHome,
+    Component: HomePage,
+  },
+];

@@ -34,8 +34,9 @@ export const AuthProvider = ({ children }) => {
     setIsLoading(true);
     try {
       const response = await AuthService.login(email, password);
-      setUser(response.data.user);
-      setItem('token', response.data.tokens.accessToken);
+      const { accessToken, ...userData } = response.data;
+      setUser(userData);
+      setItem('token', accessToken);
       setIsAuth(true);
     } catch (e) {
       console.log(e);
